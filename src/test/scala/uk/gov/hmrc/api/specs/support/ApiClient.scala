@@ -9,7 +9,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.time.Duration
 import java.util.Locale
-import scala.jdk.CollectionConverters
+import scala.jdk.CollectionConverters.*
 
 final case class ApiResponse (
   status: Int,
@@ -47,7 +47,7 @@ final class ApiClient(serviceName: String = "mtd-transaction-risking") {
       builder.header(name, value)
     }
 
-    val publisher = {
+    val publisher =
       body.fold(HttpRequest.BodyPublishers.noBody()) (
         HttpRequest.BodyPublishers.ofString(_, UTF_8)
       )
@@ -83,13 +83,22 @@ final class ApiClient(serviceName: String = "mtd-transaction-risking") {
       body: String,
       vrn: String = TestData.vrn,
       headers: Map[String, String] = TestData.defaultHeaders
+    ): ApiResponse =
+      send(s"baseUrl/feedback/$vrn", "POST", Some(body), headers)
+      
+    def acknowledge (
+      reportId: String = TestData.reportId,
+      correlationId: String = TestData.rdsCorrelationId,
+      presentedDateTime: Option[String] = Some(TestData.presentedDateTime),
+      vrn: String = TestData.vrn,
+      headers: Map[String, String] = TestData.defaultHeaders              
     ): ApiResponse = {
-      val query = presentedDateTime.fold("") { value =>
+      val query = presentedDateTime.fold("") { value => }  
         s"?presentedDateTime=${URLEncoder.encode(value, UTF_8)}"
-      }
+    }  
 
     send(
-      s"$baseUrl/acknowledge/$vrn/$vrn/$reportId/$correlationId$query",
+      s"$baseUrl/acknowledge/$vrn/$reportId/$correlationId$query",
       "POST",
       None,
       headers
