@@ -84,18 +84,18 @@ final class ApiClient(serviceName: String = "mtd-transaction-risking") {
       vrn: String = TestData.vrn,
       headers: Map[String, String] = TestData.defaultHeaders
     ): ApiResponse =
-      send(s"baseUrl/feedback/$vrn", "POST", Some(body), headers)
-      
+      send(s"$baseUrl/feedback/$vrn", "POST", Some(body), headers)
+
     def acknowledge (
       reportId: String = TestData.reportId,
       correlationId: String = TestData.rdsCorrelationId,
       presentedDateTime: Option[String] = Some(TestData.presentedDateTime),
       vrn: String = TestData.vrn,
-      headers: Map[String, String] = TestData.defaultHeaders              
+      headers: Map[String, String] = TestData.defaultHeaders
     ): ApiResponse = {
-      val query = presentedDateTime.fold("") { value => }  
+      val query = presentedDateTime.fold("") { value =>
         s"?presentedDateTime=${URLEncoder.encode(value, UTF_8)}"
-    }  
+    }
 
     send(
       s"$baseUrl/acknowledge/$vrn/$reportId/$correlationId$query",
