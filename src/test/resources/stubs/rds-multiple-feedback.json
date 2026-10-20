@@ -1,0 +1,17 @@
+{
+  "outputs": [
+    {"name": "feedbackId", "value":  "f2fb30e5-4ab6-42a9-b3c1-c00000000001"},
+    {"name":  "correlationId", "value":  "9EEB55EF4FA9A24954BC982DF1D59B3D02BC097F6B1377B8B335C7583D92B959"},
+    {"name":  "responseCode", "value": 201},
+    {"name": "englishActions", "value":  [
+      {"metadata": [{
+        "ITEMNUMBER": "string"}, {"MESSAGE": "string"}, {"TITLE": "string"}, {"ACTION": "string"}, {"LINKTITLE": "string"}, {"LINKURL": "string"}, {"PATH": "string"}]},
+      {"data":  [["1", "Review sales figures.", "Sales check", "Check records.", "VAT guidance", "https://www.gov.uk/vat-returns", "vatDueSales"], ["2", "Review purchases", "Purchases check", "", "", "", ""]]}
+    ]},
+    {"name": "welshActions", "value":  [
+      {"metadata": [{
+        "ITEMNUMBER": "string"}, {"MESSAGE": "string"}, {"TITLE": "string"}, {"ACTION": "string"}, {"LINKTITLE": "string"}, {"LINKURL": "string"}, {"PATH": "string"}]},
+      {"data":  [["1", "Adolygwch y ffigurau", "Gwiriad gwerthiant", "Gwirich gofnodion", "Canllawiau TAW", "https://www.gov.uk/vat-returns", "vatDueSales"], ["2", "Adolygwch bryniannau", "Gwiriad pryniannau", "", "", "", ""]]}
+    ]}
+  ]
+}
