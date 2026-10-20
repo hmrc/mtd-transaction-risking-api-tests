@@ -30,17 +30,23 @@ import uk.gov.hmrc.api.conf.TestEnvironment
 import uk.gov.hmrc.api.specs.support.{ApiClient, ApiResponse, DownstreamStub}
 import java.util.UUID
 
-trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with Eventually {
+trait BaseSpec
+    extends AnyFeatureSpec
+    with GivenWhenThen
+    with Matchers
+    with BeforeAndAfterAll
+    with BeforeAndAfterEach
+    with Eventually {
   protected def applicationServiceName: String =
     "mtd-transaction-risking"
 
-  protected lazy val api = new ApiClient(applicationServiceName)
+  protected lazy val api        = new ApiClient(applicationServiceName)
   protected lazy val downstream = new DownstreamStub
 
-  override implicit patienceConfig: PatienceConfig =
+  override implicit val patienceConfig: PatienceConfig =
     PatienceConfig(Span(5, Seconds), Span(100, Millis))
 
-  override protected def beforeALl(): Unit = {
+  override protected def beforeAll(): Unit = {
     super.beforeAll()
 
     require(
@@ -50,7 +56,7 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Befo
 
     downstream.start()
 
-    try {
+    try
       Seq(
         api.baseUrl,
         TestEnvironment.url("mtd-transaction-risking-stub")
@@ -59,7 +65,7 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Befo
           api.send(s"$url/ping/ping").status shouldBe 200
         }
       }
-    } catch {
+    catch {
       case error: Throwable =>
         downstream.stop()
         throw error
@@ -80,8 +86,8 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Befo
     status: Int,
     code: String
   ): Unit = {
-    withClue(s"Response body: $(response.body}. ") {
-      response.status shouldBe status
+    withClue(s"Response body: ${response.body}. ") {
+      response.status                     shouldBe status
       (response.json \ "code").as[String] shouldBe code
     }
 
@@ -90,10 +96,10 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Befo
 
   protected def assertCorrelationHeader(response: ApiResponse): Unit = {
     val value = response
-      .header("X-CorrlationId")
+      .header("X-CorrelationId")
       .getOrElse(fail("Missing X-CorrelationId response header"))
 
-    UUID.fromString(value).toString should be value
+    UUID.fromString(value).toString shouldBe value
   }
 
   protected def assertFeedbackSuccess(response: ApiResponse): Unit = {
@@ -105,22 +111,22 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Befo
 
     val reportId = (response.json \ "reportId").as[String]
 
-    UUID.fromString(reportId).toString should be reportId
+    UUID.fromString(reportId).toString shouldBe reportId
 
     (response.json \ "englishFeedback").as[Seq[JsObject]] should not be empty
-    (response.json \ "welshFeedback").as[Seq[JsObject]] should not be empty
+    (response.json \ "welshFeedback").as[Seq[JsObject]]   should not be empty
 
     awaitInteraction(response)
   }
 
   protected def assertAcknowledgmentSucess(response: ApiResponse): Unit = {
-    withClue(s"Response body: $response.body}. ") {
-      response.status should be 204
+    withClue(s"Response body: ${response.body}. ") {
+      response.status shouldBe 204
     }
 
     response.body shouldBe empty
     assertCorrelationHeader(response)
-    awaitInterraction(response)
+    awaitInteraction(response)
   }
 
   // wait for requests asynchronus RSD call before resetting wireMock
@@ -137,9 +143,9 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Befo
       )
     }
   }
-    protected def assertNotCalled(path: String): Unit =
-      downstream.server.verify(
-        0,
-        postRequestedFor(urlPathEqualTo(path))
-      )
+  protected def assertNotCalled(path: String): Unit           =
+    downstream.server.verify(
+      0,
+      postRequestedFor(urlPathEqualTo(path))
+    )
 }

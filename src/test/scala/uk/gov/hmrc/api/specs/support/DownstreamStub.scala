@@ -24,19 +24,19 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.api.conf.TestEnvironment
 
 final class DownstreamStub {
-  val server = new WireMockServer( 
+  val server = new WireMockServer(
     wireMockConfig()
       .bindAddress("127.0.0.1")
       .port(ConfigFactory.load().getInt("local.test-harness.port"))
   )
-  
+
   def start(): Unit = server.start()
-  
+
   def stop(): Unit = server.stop()
-  
+
   def reset(): Unit = {
     server.resetAll()
-    
+
     server.stubFor(
       any(anyUrl())
         .atPriority(100)
@@ -48,33 +48,33 @@ final class DownstreamStub {
     )
     authorise()
   }
-  
+
   def authorise(vrn: String = TestData.vrn): Unit = {
     val identity = Json.obj(
-      "internalId" -> "local-test-user",
-      "affinityGroup" -> "Individual",
+      "internalId"          -> "local-test-user",
+      "affinityGroup"       -> "Individual",
       "optionalCredentials" -> Json.obj(
-        "providerId" -> "local-test-user",
-        "providerType" -> "GovermentGateway"
+        "providerId"   -> "local-test-user",
+        "providerType" -> "GovernmentGateway"
       ),
-      "confidenceLevel" -> 200,
-      "agentInformation" -> Json.obj(),
-      "loginTimes" -> Json.obj(
-        "currentLogin" -> "2026-10-19T09:00:00:000Z"
+      "confidenceLevel"     -> 200,
+      "agentInformation"    -> Json.obj(),
+      "loginTimes"          -> Json.obj(
+        "currentLogin" -> "2026-10-19T09:00:00.000Z"
       ),
-      "allEnrolments" -> Json.arr(
+      "allEnrolments"       -> Json.arr(
         Json.obj(
-          "key" -> "HMRC-MTD-VAT",
+          "key"         -> "HMRC-MTD-VAT",
           "identifiers" -> Json.arr(
             Json.obj("key" -> "VRN", "value" -> vrn)
           ),
-          "state" -> "Activated"
+          "state"       -> "Activated"
         )
       )
     )
     reply("/auth/authorise", 200, Json.stringify(identity))
   }
-  
+
   def reply(path: String, status: Int, body: String): Unit = {
     server.stubFor(
       post(urlPathEqualTo(path))
@@ -84,7 +84,7 @@ final class DownstreamStub {
             .withStatus(status)
             .withHeader("Content-Type", "application/json")
             .withBody(body)
-        )  
+        )
     )
     ()
   }
