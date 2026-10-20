@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package uk.gov.hmrc.api.specs.support
 
 import com.typesafe.config.ConfigFactory
@@ -11,7 +27,7 @@ import java.time.Duration
 import java.util.Locale
 import scala.jdk.CollectionConverters.*
 
-final case class ApiResponse (
+final case class ApiResponse(
   status: Int,
   body: String,
   headers: Map[String, List[String]]
@@ -23,7 +39,7 @@ final case class ApiResponse (
 }
 
 final class ApiClient(serviceName: String = "mtd-transaction-risking") {
-  private val config = ConfigFactory.load()
+  private val config  = ConfigFactory.load()
   private val timeout = Duration.ofSeconds(config.getLong("local.request-timeout-seconds"))
 
   private val client = HttpClient
@@ -35,7 +51,7 @@ final class ApiClient(serviceName: String = "mtd-transaction-risking") {
 
   val baseUrl: String = TestEnvironment.url(serviceName)
 
-  def send (
+  def send(
     url: String,
     method: String = "GET",
     body: Option[String] = None,
@@ -43,12 +59,12 @@ final class ApiClient(serviceName: String = "mtd-transaction-risking") {
   ): ApiResponse = {
     val builder = HttpRequest.newBuilder(URI.create(url)).timeout(timeout)
 
-    headers.foreach { case (name, value ) =>
+    headers.foreach { case (name, value) =>
       builder.header(name, value)
     }
 
     val publisher =
-      body.fold(HttpRequest.BodyPublishers.noBody()) (
+      body.fold(HttpRequest.BodyPublishers.noBody())(
         HttpRequest.BodyPublishers.ofString(_, UTF_8)
       )
 
@@ -70,31 +86,31 @@ final class ApiClient(serviceName: String = "mtd-transaction-risking") {
         }
         .toMap
     )
-    }
+  }
 
-    def feedback (
-     body: JsValue = TestData.validVatReturn(),
-     vrn: String = TestData.vrn,
-     headers: Map[String, String] = TestData.defaultHeaders
-    ): ApiResponse =
-      rawFeedback(Json.stringify(body), vrn, headers)
+  def feedback(
+    body: JsValue = TestData.validVatReturn(),
+    vrn: String = TestData.vrn,
+    headers: Map[String, String] = TestData.defaultHeaders
+  ): ApiResponse =
+    rawFeedback(Json.stringify(body), vrn, headers)
 
-    def rawFeedback (
-      body: String,
-      vrn: String = TestData.vrn,
-      headers: Map[String, String] = TestData.defaultHeaders
-    ): ApiResponse =
-      send(s"$baseUrl/feedback/$vrn", "POST", Some(body), headers)
+  def rawFeedback(
+    body: String,
+    vrn: String = TestData.vrn,
+    headers: Map[String, String] = TestData.defaultHeaders
+  ): ApiResponse =
+    send(s"$baseUrl/feedback/$vrn", "POST", Some(body), headers)
 
-    def acknowledge (
-      reportId: String = TestData.reportId,
-      correlationId: String = TestData.rdsCorrelationId,
-      presentedDateTime: Option[String] = Some(TestData.presentedDateTime),
-      vrn: String = TestData.vrn,
-      headers: Map[String, String] = TestData.defaultHeaders
-    ): ApiResponse = {
-      val query = presentedDateTime.fold("") { value =>
-        s"?presentedDateTime=${URLEncoder.encode(value, UTF_8)}"
+  def acknowledge(
+    reportId: String = TestData.reportId,
+    correlationId: String = TestData.rdsCorrelationId,
+    presentedDateTime: Option[String] = Some(TestData.presentedDateTime),
+    vrn: String = TestData.vrn,
+    headers: Map[String, String] = TestData.defaultHeaders
+  ): ApiResponse = {
+    val query = presentedDateTime.fold("") { value =>
+      s"?presentedDateTime=${URLEncoder.encode(value, UTF_8)}"
     }
 
     send(
