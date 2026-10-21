@@ -26,7 +26,7 @@ import scala.jdk.CollectionConverters.*
 
 class StubbedContractSpec extends BaseSpec {
   override protected def applicationServiceName: String      =
-    "mtd-transaction-stubbed"
+    "mtd-transaction-risking-stubbed"
   private def headers(scenario: String): Map[String, String] =
     TestData.defaultHeaders + ("Gov-Test-Scenario" -> scenario)
 
@@ -132,11 +132,11 @@ class StubbedContractSpec extends BaseSpec {
         .withHeader("Gov-Test-Scenario", equalTo(scenario))
     )
 
-    assertNotCalled(s"/internal/validates/${TestData.vrn}")
+    assertNotCalled(s"/internal/validate/${TestData.vrn}")
     assertNotCalled("/check/insights")
     assertNotCalled("/rds/assessments/generate")
     assertNotCalled("/rds/acknowledge")
-    assertNotCalled("/rsd/receieve-and-store")
+    assertNotCalled("/rsd/receive-and-store")
   }
 
   private def validateContract(
