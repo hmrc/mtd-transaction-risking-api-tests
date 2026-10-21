@@ -24,7 +24,7 @@ class HttpBoundarySpec extends BaseSpec {
       response.status shouldBe 400
 
       assertNotCalled(s"/internal/validate/${TestData.vrn}")
-      assertNotCalled(("/rds/assessments.generate"))
+      assertNotCalled(("/rds/assessments/generate"))
     }
   }
 }

@@ -17,8 +17,6 @@
 package uk.gov.hmrc.api.specs
 
 import org.scalatest.featurespec.AnyFeatureSpec
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.GivenWhenThen
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, GivenWhenThen}
 import org.scalatest.concurrent.Eventually
@@ -119,7 +117,7 @@ trait BaseSpec
     awaitInteraction(response)
   }
 
-  protected def assertAcknowledgmentSucess(response: ApiResponse): Unit = {
+  protected def assertAcknowledgmentSuccess(response: ApiResponse): Unit = {
     withClue(s"Response body: ${response.body}. ") {
       response.status shouldBe 204
     }
