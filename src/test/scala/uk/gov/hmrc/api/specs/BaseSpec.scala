@@ -20,7 +20,6 @@ import org.scalatest.featurespec.AnyFeatureSpec
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, GivenWhenThen}
 import org.scalatest.concurrent.Eventually
-import org.scalatest.featurespec.AnyFeatureSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.{Millis, Seconds, Span}
 import play.api.libs.json.JsObject
