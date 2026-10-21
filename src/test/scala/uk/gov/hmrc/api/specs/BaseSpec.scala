@@ -117,7 +117,7 @@ trait BaseSpec
     awaitInteraction(response)
   }
 
-  protected def assertAcknowledgmentSuccess(response: ApiResponse): Unit = {
+  protected def assertAcknowledgementSuccess(response: ApiResponse): Unit = {
     withClue(s"Response body: ${response.body}. ") {
       response.status shouldBe 204
     }
