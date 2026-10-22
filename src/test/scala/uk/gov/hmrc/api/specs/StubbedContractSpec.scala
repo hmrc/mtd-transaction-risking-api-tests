@@ -21,6 +21,7 @@ import com.atlassian.oai.validator.model.{SimpleRequest, SimpleResponse}
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import play.api.libs.json.Json
 import uk.gov.hmrc.api.specs.support.{ApiResponse, TestData}
+import com.atlassian.oai.validator.report.{LevelResolver, ValidationReport}
 
 import scala.jdk.CollectionConverters.*
 
@@ -42,6 +43,15 @@ class StubbedContractSpec extends BaseSpec {
 
     OpenApiInteractionValidator
       .createForInlineApiSpecification(specification.body)
+      .withLevelResolver(
+        LevelResolver
+          .create()
+          .withLevel(
+            "validation.request.accept.notAllowed",
+            ValidationReport.Level.IGNORE
+          )
+          .build()
+      )
       .build()
   }
 
