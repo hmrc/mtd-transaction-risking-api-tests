@@ -154,7 +154,7 @@ trait BaseSpec
     eventually {
       downstream.server.verify(
         expectedCount,
-        postRequestedFor(urlPathEqualTo("/nrs/orchestrator/submission"))
+        postRequestedFor(urlPathEqualTo("/nrs-orchestrator/submission"))
           .withHeader("X-Correlation-Id", equalTo(correlationId))
       )
     }
