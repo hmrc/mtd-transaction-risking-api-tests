@@ -114,6 +114,7 @@ trait BaseSpec
     (response.json \ "welshFeedback").as[Seq[JsObject]]   should not be empty
 
     awaitInteraction(response)
+    awaitNrsSubmission(response, 2)
   }
 
   protected def assertAcknowledgementSuccess(response: ApiResponse): Unit = {
@@ -124,6 +125,7 @@ trait BaseSpec
     response.body shouldBe empty
     assertCorrelationHeader(response)
     awaitInteraction(response)
+    awaitNrsSubmission(response, 1)
   }
 
   // wait for requests asynchronus RSD call before resetting wireMock
@@ -140,7 +142,25 @@ trait BaseSpec
       )
     }
   }
-  protected def assertNotCalled(path: String): Unit           =
+
+  protected def awaitNrsSubmission(
+    response: ApiResponse,
+    expectedCount: Int
+  ): Unit = {
+    val correlationId = response
+      .header("X-CorrelationId")
+      .getOrElse(fail("Missing X-CorrelationId"))
+
+    eventually {
+      downstream.server.verify(
+        expectedCount,
+        postRequestedFor(urlPathEqualTo("/nrs/orchestrator/submission"))
+          .withHeader("X-Correlation-Id", equalTo(correlationId))
+      )
+    }
+  }
+
+  protected def assertNotCalled(path: String): Unit =
     downstream.server.verify(
       0,
       postRequestedFor(urlPathEqualTo(path))

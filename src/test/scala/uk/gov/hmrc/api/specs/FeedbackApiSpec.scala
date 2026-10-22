@@ -72,6 +72,9 @@ class FeedbackApiSpec extends BaseSpec {
         (messages.head \ "path").toOption         shouldBe None
       }
 
+      // Allow five seconds for any asynchronous NRS or RSD requests to reach WireMock
+      Thread.sleep(5000L)
+
       assertNotCalled("/rsd/receive-and-store")
       assertNotCalled("/nrs-orchestrator/submission")
     }
@@ -101,7 +104,7 @@ class FeedbackApiSpec extends BaseSpec {
         }
         .toMap
 
-      // JSON number comparison treats 100 and 100.00 ans the same amount
+      // JSON number comparison treats 100 and 100.00 as the same amount
       body.fields.foreach { case (name, value) =>
         inputs(name) shouldBe value
       }
