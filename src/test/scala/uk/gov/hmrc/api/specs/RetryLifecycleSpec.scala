@@ -26,7 +26,7 @@ class RetryLifecycleSpec extends BaseSpec {
     Target(
       "RSD",
       "/rsd/receive-and-store",
-      "/CorrelationId",
+      "CorrelationId",
       "rsd-interaction-work-items",
       204
     ),
@@ -54,13 +54,14 @@ class RetryLifecycleSpec extends BaseSpec {
     
   override protected def afterEach(): Unit = {
     try {
-      activeRequest.foreach{ case (target, correlationId) => 
-        post(urlPathEqualTo(target.path))
-          .withHeader(target.header, equalTo(correlationId))
-          .atPriority(0)
-          .willReturn(aResponse().withStatus(target.successStatus))
-        ) 
-        
+      activeRequest.foreach { case (target, correlationId) =>
+        downstream.server.stubFor(
+          post(urlPathEqualTo(target.path))
+            .withHeader(target.header, equalTo(correlationId))
+            .atPriority(0)
+            .willReturn(aResponse().withStatus(target.successStatus))
+        )
+
         eventually {
           mongo
             .find(target.collection, correlationId)
@@ -71,6 +72,7 @@ class RetryLifecycleSpec extends BaseSpec {
       activeRequest = None
       super.afterEach()
     }
+  } 
     
     targets.foreach { target => 
       Feature(s"${target.name} retry lifecycle through the running application") {
@@ -92,8 +94,8 @@ class RetryLifecycleSpec extends BaseSpec {
             
             downstream.server.getAllServeEvents.asScala.exists { event => 
               event.getRequest.getUrl == target.path &&
-                event.getRequest.getHeader(target.header) == correlationId &&
-                 .exists(_.getStatus == target.successStatus)
+              event.getRequest.getHeader(target.header) == correlationId &&
+              Option(event.getResponse).exists(_.getStatus == target.successStatus)
           } shouldBe true
             
             mongo.find(target.collection, correlationId) shouldBe empty
@@ -109,7 +111,7 @@ class RetryLifecycleSpec extends BaseSpec {
       // For each service, keept returning 503 until all ten retries are exhausted,
       // then verify the retained Mongo state and that no further request is sent
       Scenario(
-        s"${target.name}: retain a permanently failed work item after ten successful retries"
+        s"${target.name}: retain a permanently failed work item after ten unsuccessful retries"
       )  {
           failingScenario(target)
         
@@ -228,12 +230,13 @@ class RetryLifecycleSpec extends BaseSpec {
         .asScala
         .toSeq
         .sortBy(_.getLoggedDate.getTime)
-        
+    } 
+    
       private def assertReplayedBody(
         target: Target,
         correlationId: String
       ): Unit = {
-        val calls = request(target, correlationId)#
+        val calls = requests(target, correlationId)
         
         calls.size should be >= 2
         

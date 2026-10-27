@@ -47,6 +47,6 @@ final class RetryMongo extends AutoCloseable {
         )
       )
       
-    override def close(): Unit = client.close()
+      override def close(): Unit = client.close()
 
 }
