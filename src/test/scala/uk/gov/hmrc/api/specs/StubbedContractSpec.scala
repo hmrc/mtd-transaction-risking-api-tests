@@ -57,8 +57,7 @@ class StubbedContractSpec extends BaseSpec {
 
   Feature("OAS contracts for the applications dedicated stubbed paths") {
 
-    // This test is failing as there is updates to OAS that need to be done regarding expected value for itemNumber
-    // genereats a report through feedback-sstub and validates the request and actual 200 response
+    // generates a report through feedback-stub and validates the request and response against the OAS
     Scenario("Generates a report through the stubbed path and satisfy the OAS") {
       val body = TestData.validVatReturn()
 
