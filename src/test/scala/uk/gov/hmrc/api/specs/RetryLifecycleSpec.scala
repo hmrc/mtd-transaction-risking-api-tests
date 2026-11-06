@@ -167,18 +167,18 @@ class RetryLifecycleSpec extends BaseSpec {
   Feature("DL-20935: RSD returns 404") {
 
     Scenario("Retry initial and subsequent RSD 404 responses, then recover") {
-      val target = targets.find(_.name == "RSD").get
-      val scenario = failingScenario(target, status = 404)
+      val target        = targets.find(_.name == "RSD").get
+      val scenario      = failingScenario(target, status = 404)
       val correlationId = submitAcknowledgement(target)
-      val queued = awaitQueued(target, correlationId)
+      val queued        = awaitQueued(target, correlationId)
 
-      eventually{
+      eventually {
         val items = mongo.find(target.collection, correlationId)
         items should have size 1
 
         val current = items.head
-        current.id shouldBe queued.id
-        current.status shouldBe "failed"
+        current.id         shouldBe queued.id
+        current.status     shouldBe "failed"
         current.failureCount should be >= 1
         current.failureCount should be < maxRetries
 
@@ -187,12 +187,12 @@ class RetryLifecycleSpec extends BaseSpec {
 
       downstream.server.setScenarioState(scenario, "Recovered")
 
-      eventually{
-        downstream.server.getAllServeEvents.asScala.exists{ event =>
+      eventually {
+        downstream.server.getAllServeEvents.asScala.exists { event =>
           event.getRequest.getUrl == target.path &&
-            event.getRequest.getHeader(target.header) == correlationId &&
-            Option(event.getResponse).exists(_.getStatus == target.successStatus)
-        } should be true
+          event.getRequest.getHeader(target.header) == correlationId &&
+          Option(event.getResponse).exists(_.getStatus == target.successStatus)
+        } shouldBe true
 
         mongo.find(target.collection, correlationId) shouldBe empty
       }
