@@ -164,7 +164,44 @@ class RetryLifecycleSpec extends BaseSpec {
     }
   }
 
-  private def failingScenario(target: Target): String = {
+  Feature("DL-20935: RSD returns 404") {
+
+    Scenario("Retry initial and subsequent RSD 404 responses, then recover") {
+      val target = targets.find(_.name == "RSD").get
+      val scenario = failingScenario(target, status = 404)
+      val correlationId = submitAcknowledgement(target)
+      val queued = awaitQueued(target, correlationId)
+
+      eventually{
+        val items = mongo.find(target.collection, correlationId)
+        items should have size 1
+
+        val current = items.head
+        current.id shouldBe queued.id
+        current.status shouldBe "failed"
+        current.failureCount should be >= 1
+        current.failureCount should be < maxRetries
+
+        requests(target, correlationId).size should be >= 2
+      }
+
+      downstream.server.setScenarioState(scenario, "Recovered")
+
+      eventually{
+        downstream.server.getAllServeEvents.asScala.exists{ event =>
+          event.getRequest.getUrl == target.path &&
+            event.getRequest.getHeader(target.header) == correlationId &&
+            Option(event.getResponse).exists(_.getStatus == target.successStatus)
+        } should be true
+
+        mongo.find(target.collection, correlationId) shouldBe empty
+      }
+
+      assertReplayedBody(target, correlationId)
+    }
+  }
+
+  private def failingScenario(target: Target, status: Int = 503): String = {
     val name = s"${target.name}-${UUID.randomUUID()}"
 
     downstream.server.stubFor(
@@ -172,7 +209,7 @@ class RetryLifecycleSpec extends BaseSpec {
         .atPriority(1)
         .inScenario(name)
         .whenScenarioStateIs(WireMockScenario.STARTED)
-        .willReturn(aResponse().withStatus(503))
+        .willReturn(aResponse().withStatus(status))
     )
 
     downstream.server.stubFor(
