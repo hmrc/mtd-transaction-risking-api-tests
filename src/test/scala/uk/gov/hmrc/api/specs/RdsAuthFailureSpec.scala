@@ -39,7 +39,7 @@ class RdsAuthFailureSpec extends BaseSpec {
     }
 
     // Check that a token-service 404 gives the acknowledgement caller 503
-    // and prevents the downstream acknowledment from being sent
+    // and prevents the downstream acknowledgment from being sent
     Scenario("Return 503 for acknowledgement when RDS authentication returns 404") {
       downstream.reply(tokenPath, 404, "{}")
 
