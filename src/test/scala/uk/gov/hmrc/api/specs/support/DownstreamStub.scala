@@ -47,6 +47,12 @@ final class DownstreamStub {
         )
     )
     authorise()
+    // return a valid token without allowing it to be cached across tests
+    reply(
+      "/SASLogon/oauth/token",
+      200,
+      """{"access_token":"stub-bearer-token","token_type":"bearer","expires_in":1}"""
+    )
   }
 
   def authorise(vrn: String = TestData.vrn): Unit = {

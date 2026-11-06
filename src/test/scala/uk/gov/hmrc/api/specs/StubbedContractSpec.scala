@@ -145,7 +145,7 @@ class StubbedContractSpec extends BaseSpec {
     assertNotCalled(s"/internal/validate/${TestData.vrn}")
     assertNotCalled("/check/insights")
     assertNotCalled("/rds/assessments/generate")
-    assertNotCalled("/rds/acknowledge")
+    assertNotCalled("/rds/assessments/acknowledge")
     assertNotCalled("/rsd/receive-and-store")
   }
 
