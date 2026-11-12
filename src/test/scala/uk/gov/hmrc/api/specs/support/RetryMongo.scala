@@ -63,7 +63,7 @@ final class RetryMongo extends AutoCloseable {
         )
       )
 
-  // REad the stored document exactly as Mongo holds it
+  // Read the stored document exactly as Mongo holds it
   def raw(collection: String, id: ObjectId): Option[String] =
     Option(
       database

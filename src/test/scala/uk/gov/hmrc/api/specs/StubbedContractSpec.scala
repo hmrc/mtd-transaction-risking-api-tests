@@ -81,7 +81,7 @@ class StubbedContractSpec extends BaseSpec {
 
     // Check the stubbed INVALID_REQUEST response includes both field errors
     // and that the request and response satisfy the applications OAS
-    Scenario("Return detailed INVALID_REQUEST feedback and satisy the OAS") {
+    Scenario("Return detailed INVALID_REQUEST feedback and satisfy the OAS") {
       val scenario = "INVALID_REQUEST"
       val body     = TestData.validVatReturn()
 
@@ -140,7 +140,7 @@ class StubbedContractSpec extends BaseSpec {
       )
     }
 
-    // Checks the updated CORRELATION_ID selector returns 400 with error code
+    // Checks the updated ACKNOWLEDGEMENT_VALIDATION_FAILED selector returns 400 with error code
     Scenario("Relay the stubs updated acknowledgement validation error and satisfy the OAS") {
       assertStubbedAcknowledgementError(
         "ACKNOWLEDGEMENT_VALIDATION_FAILED",
