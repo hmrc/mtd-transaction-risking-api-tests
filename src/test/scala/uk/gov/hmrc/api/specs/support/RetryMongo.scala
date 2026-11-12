@@ -63,6 +63,15 @@ final class RetryMongo extends AutoCloseable {
         )
       )
 
+  // REad the stored document exactly as Mongo holds it
+  def raw(collection: String, id: ObjectId): Option[String] =
+    Option(
+      database
+        .getCollection(collection)
+        .find(Filters.eq("_id", id))
+        .first()
+    ).map(_.toJson)
+
   override def close(): Unit = client.close()
 
 }
