@@ -19,7 +19,7 @@ package uk.gov.hmrc.api.specs
 import com.atlassian.oai.validator.OpenApiInteractionValidator
 import com.atlassian.oai.validator.model.{SimpleRequest, SimpleResponse}
 import com.github.tomakehurst.wiremock.client.WireMock.*
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.api.specs.support.{ApiResponse, TestData}
 import com.atlassian.oai.validator.report.{LevelResolver, ValidationReport}
 
@@ -79,6 +79,39 @@ class StubbedContractSpec extends BaseSpec {
       )
     }
 
+    // Check the stubbed INVALID_REQUEST response includes both field errors
+    // and that the request and response satisfy the applications OAS
+    Scenario("Return detailed INVALID_REQUEST feedback and satisfy the OAS") {
+      val scenario = "INVALID_REQUEST"
+      val body     = TestData.validVatReturn()
+
+      val response = api.feedback(
+        body = body,
+        headers = headers(scenario)
+      )
+
+      assertError(response, 400, "INVALID_REQUEST")
+
+      val errors = (response.json \ "errors").as[Seq[JsObject]]
+      errors should have size 2
+
+      errors.map { error =>
+        (error \ "code").as[String] -> (error \ "path").as[String]
+      }.toMap shouldBe Map(
+        "VAT_NET_VALUE"   -> "/netVatDue",
+        "VAT_TOTAL_VALUE" -> "/totalVatDue"
+      )
+
+      verifyStubbedPath("/feedback", scenario)
+
+      validateContract(
+        s"/feedback/${TestData.vrn}",
+        response,
+        scenario = scenario,
+        body = Some(Json.stringify(body))
+      )
+    }
+
     // Acknowledge independently through the acknowledge-stub and validatss the request and 204 response
     Scenario("Acknowledge through the stubbed path and satisfy the OAS") {
       val response = api.acknowledge(
@@ -107,10 +140,10 @@ class StubbedContractSpec extends BaseSpec {
       )
     }
 
-    // Checks the updated CORRELATION_ID selector returns 400 with error code
+    // Checks the updated ACKNOWLEDGEMENT_VALIDATION_FAILED selector returns 400 with error code
     Scenario("Relay the stubs updated acknowledgement validation error and satisfy the OAS") {
       assertStubbedAcknowledgementError(
-        "CORRELATION_ID",
+        "ACKNOWLEDGEMENT_VALIDATION_FAILED",
         "ACKNOWLEDGEMENT_VALIDATION_FAILED"
       )
     }
