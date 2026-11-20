@@ -21,7 +21,7 @@ import com.github.tomakehurst.wiremock.stubbing.Scenario as WireMockScenario
 import com.github.tomakehurst.wiremock.verification.LoggedRequest
 import org.scalatest.time.{Millis, Seconds, Span}
 import play.api.libs.json.Json
-import uk.gov.hmrc.api.specs.support.{RetryMongo, RetryWorkItem}
+import uk.gov.hmrc.api.specs.support.{RetryMongo, RetryWorkItem, TestData}
 
 import java.util.UUID
 import scala.jdk.CollectionConverters.*
@@ -261,6 +261,13 @@ class RetryLifecycleSpec extends BaseSpec {
 
         Set("todo", "in-progress", "failed") should contain(item.status)
         item.failureCount                    should be < maxRetries
+
+        // Check the stored retry record does not expose the VRN in plaintext
+        val raw = mongo.raw(target.collection, item.id).getOrElse {
+          fail(s"Retry record ${item.id} was not found in Mongo")
+        }
+
+        raw should not include (TestData.vrn)
 
         info(
           s"${target.name} queued work item ${item.id}; correlationId = $correlationId"

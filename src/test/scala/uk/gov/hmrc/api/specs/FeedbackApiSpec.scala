@@ -112,5 +112,39 @@ class FeedbackApiSpec extends BaseSpec {
       inputs("startDate").as[String] shouldBe "2026-01-01"
       inputs("endDate").as[String]   shouldBe "2026-03-31"
     }
+
+    // Check each obligation error is returned without continuing to report generation
+    Seq(
+      ("ZZ99", 400, "PERIOD_KEY_INVALID"), // No matching open obligation
+      ("ZZ98", 403, "TAX_PERIOD_NOT_ENDED"), // The tax period has not ended
+      ("ZZ97", 403, "RULE_INSOLVENT_TRADER"), // The trader is insolvent
+      ("ZZ96", 503, "SERVICE_UNAVAILABLE") // The obligations service is unavailable
+    ).foreach { case (periodKey, status, code) =>
+      Scenario(s"Return $status $code for obligation scenario $periodKey") {
+        val response = api.feedback(TestData.validVatReturn(periodKey))
+
+        assertError(response, status, code)
+
+        assertNotCalled("/check/insights")
+        assertNotCalled("/SASLogon/oauth/token")
+        assertNotCalled("/rds/assessments/generate")
+      }
+    }
+
+    // Check a malformed period key returns INVALID_REQUEST with field-level details
+    Scenario("Return 400 with a period-key validation error") {
+      val response = api.feedback(TestData.validVatReturn("BAD"))
+
+      assertError(response, 400, "INVALID_REQUEST")
+
+      val errors = (response.json \ "errors").as[Seq[JsObject]]
+      errors                              should have size 1
+      (errors.head \ "code").as[String] shouldBe "PERIOD_KEY_INVALID"
+      (errors.head \ "path").as[String] shouldBe "/periodKey"
+
+      assertNotCalled("/check/insights")
+      assertNotCalled("/SASLogon/oauth/token")
+      assertNotCalled("/rds/assessments/generate")
+    }
   }
 }
