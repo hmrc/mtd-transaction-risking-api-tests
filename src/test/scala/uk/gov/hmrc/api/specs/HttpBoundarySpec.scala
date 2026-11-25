@@ -70,6 +70,7 @@ class HttpBoundarySpec extends BaseSpec {
       )
 
       assertError(response, 401, "INVALID_CREDENTIALS")
+      (response.json \ "message").as[String] shouldBe "Invalid Authentication information provided"
 
       downstream.server.verify(
         1,
