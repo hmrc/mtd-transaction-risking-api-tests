@@ -140,9 +140,9 @@ class StubbedContractSpec extends BaseSpec {
         "The provided correlation ID is invalid"
       ),
       (
-        "ACKOWLEDGEMENT_VALIDATION_FAILED",
+        "ACKNOWLEDGEMENT_VALIDATION_FAILED",
         400,
-        "ACKOWLEDGEMENT_VALIDATION_FAILED",
+        "ACKNOWLEDGEMENT_VALIDATION_FAILED",
         "The acknowledgement request failed validation"
       ),
       (
@@ -190,7 +190,8 @@ class StubbedContractSpec extends BaseSpec {
   private def assertStubbedAcknowledgementError(
     scenario: String,
     status: Int,
-    code: String
+    code: String,
+    message: String
   ): Unit = {
     val response = api.acknowledge(
       headers = headers(scenario)
