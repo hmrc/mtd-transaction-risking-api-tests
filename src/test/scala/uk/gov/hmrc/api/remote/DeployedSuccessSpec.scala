@@ -16,8 +16,7 @@ class DeployedSuccessSpec extends AnyFeatureSpec with Matchers {
   private def requiredEnvironmentVariable(name: String): String = {
     sys.env.get(name).map(_.trim).filter(_.nonEmpty).getOrElse {
       fail (
-        s"Set $name before running this spec in ${TestEnvironment.environment}"
-      )
+        s"Set $name before running this spec in ${TestEnvironment.environment}")
     }
 
     private def authorisationFor(vrn: String): String = {
@@ -140,7 +139,7 @@ class DeployedSuccessSpec extends AnyFeatureSpec with Matchers {
         )
 
         withClue(s"Acknowledgement response: ${acknowledged.body}\n") {
-          acknolwedged.status shouldBe 204
+          acknowledged.status shouldBe 204
         }
 
         acknowledged.body shouldBe empty
