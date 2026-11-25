@@ -131,7 +131,7 @@ class StubbedContractSpec extends BaseSpec {
         query = Map("presentedDateTime" -> TestData.presentedDateTime)
       )
     }
-    
+
     Seq(
       (
         "INVALID_CORRELATIONID",
@@ -142,7 +142,7 @@ class StubbedContractSpec extends BaseSpec {
       (
         "ACKOWLEDGEMENT_VALIDATION_FAILED",
         400,
-        "ACKOWEDGEMENT_VALIDATION_FAILED",
+        "ACKOWLEDGEMENT_VALIDATION_FAILED",
         "The acknowledgement request failed validation"
       ),
       (
@@ -167,7 +167,7 @@ class StubbedContractSpec extends BaseSpec {
         "INVALID_DATETIME",
         400,
         "PRESENTED_DATE_TIME_INVALID",
-        "The presentedDateTime query parameeter is missing or invalid"
+        "The presentedDateTime query parameter is missing or invalid"
       ),
       (
         "NOT_AUTHORISED",
@@ -175,7 +175,7 @@ class StubbedContractSpec extends BaseSpec {
         "CLIENT_OR_AGENT_NOT_AUTHORISED",
         "The client and/or agent is not authorised"
       )
-    ).foreach { case (scenario, status, code, message) => 
+    ).foreach { case (scenario, status, code, message) =>
       Scenario(s"Acknowledge $scenario returns $status and satisfies the OAS") {
         assertStubbedAcknowledgementError(
           scenario,
@@ -185,33 +185,19 @@ class StubbedContractSpec extends BaseSpec {
         )
       }
     }
-
-    // Uses valid URL identifiers so INVALID_CORRELATIONID reaches the mtd-transaction-risking-stub repo
-    Scenario("Relay the stubs CORRELATION_ID_INVALID error and satisfy the OAS") {
-      assertStubbedAcknowledgementError(
-        "INVALID_CORRELATIONID",
-        "CORRELATION_ID_INVALID"
-      )
-    }
-
-    // Checks the updated ACKNOWLEDGEMENT_VALIDATION_FAILED selector returns 400 with error code
-    Scenario("Relay the stubs updated acknowledgement validation error and satisfy the OAS") {
-      assertStubbedAcknowledgementError(
-        "ACKNOWLEDGEMENT_VALIDATION_FAILED",
-        "ACKNOWLEDGEMENT_VALIDATION_FAILED"
-      )
-    }
   }
 
   private def assertStubbedAcknowledgementError(
     scenario: String,
+    status: Int,
     code: String
   ): Unit = {
     val response = api.acknowledge(
       headers = headers(scenario)
     )
 
-    assertError(response, 400, code)
+    assertError(response, status, code)
+    (response.json \ "message").as[String] shouldBe message
     verifyStubbedPath("/acknowledge", scenario)
 
     validateContract(

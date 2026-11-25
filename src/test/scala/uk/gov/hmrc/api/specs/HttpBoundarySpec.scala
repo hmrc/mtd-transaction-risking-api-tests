@@ -43,11 +43,11 @@ class HttpBoundarySpec extends BaseSpec {
       assertNotCalled(s"/internal/validate/${TestData.vrn}")
       assertNotCalled("/rds/assessments/generate")
     }
-    
+
     // Execises application authentication failure without using Gov-Test-Scenario
     Scenario("Return 401 when auth rejects an invalid acknowledgement bearer token") {
       val invalidAuthorization = "Bearer invalid-api-test-token"
-      
+
       downstream.server.stubFor(
         post(urlPathEqualTo("/auth/authorise"))
           .withHeader("Authorization", equalTo(invalidAuthorization))
@@ -61,22 +61,22 @@ class HttpBoundarySpec extends BaseSpec {
               )
           )
       )
-      
+
       val response = api.acknowledge(
         headers = TestData.defaultHeaders.updated(
           "Authorization",
           invalidAuthorization
         )
       )
-      
+
       assertError(response, 401, "INVALID_CREDENTIALS")
-      
+
       downstream.server.verify(
         1,
         postRequestedFor(urlPathEqualTo("/auth/authorise"))
           .withHeader("Authorization", equalTo(invalidAuthorization))
       )
-      
+
       assertNotCalled("/SASLogon/oauth/token")
       assertNotCalled("/rds/assessments/acknowledge")
       assertNotCalled("/acknowledge")
