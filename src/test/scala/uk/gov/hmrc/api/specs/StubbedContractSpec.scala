@@ -26,10 +26,10 @@ import com.atlassian.oai.validator.report.{LevelResolver, ValidationReport}
 import scala.jdk.CollectionConverters.*
 
 class StubbedContractSpec extends BaseSpec {
-  override protected def applicationServiceName: String      =
+  override protected def applicationServiceName: String              =
     "mtd-transaction-risking-stubbed"
   private def headers(scenario: Option[String]): Map[String, String] =
-    scenario.fold(TestData.defaultHeaders)(name =>  TestData.defaultHeaders + ("Gov-Test-Scenario" -> name))
+    scenario.fold(TestData.defaultHeaders)(name => TestData.defaultHeaders + ("Gov-Test-Scenario" -> name))
 
   // load unchanged OAS from mtd-transaction-risking-repo
   private lazy val validator = {
@@ -210,9 +210,9 @@ class StubbedContractSpec extends BaseSpec {
   }
 
   private def verifyStubbedPath(path: String, scenario: Option[String]): Unit = {
-    val request = postRequestedFor(urlPathEqualTo(path))
+    val request  = postRequestedFor(urlPathEqualTo(path))
     val expected = scenario match {
-      case None => request.withHeader("Gov-Test-Scenario", absent())
+      case None       => request.withHeader("Gov-Test-Scenario", absent())
       case Some(name) => request.withHeader("GOV-Test-Scenario", equalTo(name))
     }
     downstream.server.verify(1, expected)
