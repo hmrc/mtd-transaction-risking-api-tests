@@ -131,6 +131,60 @@ class StubbedContractSpec extends BaseSpec {
         query = Map("presentedDateTime" -> TestData.presentedDateTime)
       )
     }
+    
+    Seq(
+      (
+        "INVALID_CORRELATIONID",
+        400,
+        "CORRELATION_ID_INVALID",
+        "The provided correlation ID is invalid"
+      ),
+      (
+        "ACKOWLEDGEMENT_VALIDATION_FAILED",
+        400,
+        "ACKOWEDGEMENT_VALIDATION_FAILED",
+        "The acknowledgement request failed validation"
+      ),
+      (
+        "INVALID_CREDENTIALS",
+        401,
+        "INVALID_CREDENTIALS",
+        "Invalid authentication information provided"
+      ),
+      (
+        "NOT_FOUND",
+        404,
+        "MATCHING_RESOURCE_NOT_FOUND",
+        "A resource with the name in the request can not be found in the API"
+      ),
+      (
+        "INVALID_REPORTID",
+        400,
+        "REPORT_ID_INVALID",
+        "The provided report ID is invalid"
+      ),
+      (
+        "INVALID_DATETIME",
+        400,
+        "PRESENTED_DATE_TIME_INVALID",
+        "The presentedDateTime query parameeter is missing or invalid"
+      ),
+      (
+        "NOT_AUTHORISED",
+        403,
+        "CLIENT_OR_AGENT_NOT_AUTHORISED",
+        "The client and/or agent is not authorised"
+      )
+    ).foreach { case (scenario, status, code, message) => 
+      Scenario(s"Acknowledge $scenario returns $status and satisfies the OAS") {
+        assertStubbedAcknowledgementError(
+          scenario,
+          status,
+          code,
+          message
+        )
+      }
+    }
 
     // Uses valid URL identifiers so INVALID_CORRELATIONID reaches the mtd-transaction-risking-stub repo
     Scenario("Relay the stubs CORRELATION_ID_INVALID error and satisfy the OAS") {
@@ -221,7 +275,7 @@ class StubbedContractSpec extends BaseSpec {
     )
 
     withClue(
-      s"OAS validatiomn errors:\n${report.getMessages.asScala.mkString("\n")}\n"
+      s"OAS validation errors:\n${report.getMessages.asScala.mkString("\n")}\n"
     ) {
       report.hasErrors shouldBe false
     }
