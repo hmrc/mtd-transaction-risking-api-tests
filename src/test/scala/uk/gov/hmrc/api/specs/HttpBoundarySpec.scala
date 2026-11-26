@@ -16,12 +16,13 @@
 
 package uk.gov.hmrc.api.specs
 
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import uk.gov.hmrc.api.specs.support.TestData
 
 class HttpBoundarySpec extends BaseSpec {
   Feature("HTTP routing and request parsing") {
 
-    // omits version Accept Header and checks rejection before authentication
+    // Omits version Accept Header and checks rejection before authentication
     Scenario("Return 406 when the API version Accept header is missing") {
       val response = api.feedback(
         headers = TestData.defaultHeaders - "Accept"
@@ -41,6 +42,47 @@ class HttpBoundarySpec extends BaseSpec {
 
       assertNotCalled(s"/internal/validate/${TestData.vrn}")
       assertNotCalled("/rds/assessments/generate")
+    }
+
+    // Execises application authentication failure without using Gov-Test-Scenario
+    Scenario("Return 401 when auth rejects an invalid acknowledgement bearer token") {
+      val invalidAuthorization = "Bearer invalid-api-test-token"
+
+      downstream.server.stubFor(
+        post(urlPathEqualTo("/auth/authorise"))
+          .withHeader("Authorization", equalTo(invalidAuthorization))
+          .atPriority(0)
+          .willReturn(
+            aResponse()
+              .withStatus(401)
+              .withHeader(
+                "WWW-Authenticate",
+                "MDTP detail=\"InvalidBearerToken\""
+              )
+          )
+      )
+
+      val response = api.acknowledge(
+        headers = TestData.defaultHeaders.updated(
+          "Authorization",
+          invalidAuthorization
+        )
+      )
+
+      assertError(response, 401, "INVALID_CREDENTIALS")
+      (response.json \ "message").as[String] shouldBe "Invalid Authentication information provided"
+
+      downstream.server.verify(
+        1,
+        postRequestedFor(urlPathEqualTo("/auth/authorise"))
+          .withHeader("Authorization", equalTo(invalidAuthorization))
+      )
+
+      assertNotCalled("/SASLogon/oauth/token")
+      assertNotCalled("/rds/assessments/acknowledge")
+      assertNotCalled("/acknowledge")
+      assertNotCalled("/rsd/receive-and-store")
+      assertNotCalled("/nrs-orchestrator/submission")
     }
   }
 }

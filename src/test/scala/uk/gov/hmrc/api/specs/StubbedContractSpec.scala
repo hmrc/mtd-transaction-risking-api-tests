@@ -26,10 +26,10 @@ import com.atlassian.oai.validator.report.{LevelResolver, ValidationReport}
 import scala.jdk.CollectionConverters.*
 
 class StubbedContractSpec extends BaseSpec {
-  override protected def applicationServiceName: String      =
+  override protected def applicationServiceName: String              =
     "mtd-transaction-risking-stubbed"
-  private def headers(scenario: String): Map[String, String] =
-    TestData.defaultHeaders + ("Gov-Test-Scenario" -> scenario)
+  private def headers(scenario: Option[String]): Map[String, String] =
+    scenario.fold(TestData.defaultHeaders)(name => TestData.defaultHeaders + ("Gov-Test-Scenario" -> name))
 
   // load unchanged OAS from mtd-transaction-risking-repo
   private lazy val validator = {
@@ -63,18 +63,18 @@ class StubbedContractSpec extends BaseSpec {
 
       val response = api.feedback(
         body = body,
-        headers = headers("-")
+        headers = headers(None)
       )
 
       response.status shouldBe 200
       assertCorrelationHeader(response)
 
-      verifyStubbedPath("/feedback", "-")
+      verifyStubbedPath("/feedback", None)
 
       validateContract(
         s"/feedback/${TestData.vrn}",
         response,
-        scenario = "-",
+        scenario = None,
         body = Some(Json.stringify(body))
       )
     }
@@ -82,7 +82,7 @@ class StubbedContractSpec extends BaseSpec {
     // Check the stubbed INVALID_REQUEST response includes both field errors
     // and that the request and response satisfy the applications OAS
     Scenario("Return detailed INVALID_REQUEST feedback and satisfy the OAS") {
-      val scenario = "INVALID_REQUEST"
+      val scenario = Some("INVALID_REQUEST")
       val body     = TestData.validVatReturn()
 
       val response = api.feedback(
@@ -115,65 +115,107 @@ class StubbedContractSpec extends BaseSpec {
     // Acknowledge independently through the acknowledge-stub and validatss the request and 204 response
     Scenario("Acknowledge through the stubbed path and satisfy the OAS") {
       val response = api.acknowledge(
-        headers = headers("-")
+        headers = headers(None)
       )
 
       response.status shouldBe 204
       response.body   shouldBe empty
       assertCorrelationHeader(response)
 
-      verifyStubbedPath("/acknowledge", "-")
+      verifyStubbedPath("/acknowledge", None)
 
       validateContract(
         s"/acknowledge/${TestData.vrn}/${TestData.reportId}/${TestData.rdsCorrelationId}",
         response,
-        scenario = "-",
+        scenario = None,
         query = Map("presentedDateTime" -> TestData.presentedDateTime)
       )
     }
 
-    // Uses valid URL identifiers so INVALID_CORRELATIONID reaches the mtd-transaction-risking-stub repo
-    Scenario("Relay the stubs CORRELATION_ID_INVALID error and satisfy the OAS") {
-      assertStubbedAcknowledgementError(
+    Seq(
+      (
         "INVALID_CORRELATIONID",
-        "CORRELATION_ID_INVALID"
-      )
-    }
-
-    // Checks the updated ACKNOWLEDGEMENT_VALIDATION_FAILED selector returns 400 with error code
-    Scenario("Relay the stubs updated acknowledgement validation error and satisfy the OAS") {
-      assertStubbedAcknowledgementError(
+        400,
+        "CORRELATION_ID_INVALID",
+        "The provided correlation ID is invalid"
+      ),
+      (
         "ACKNOWLEDGEMENT_VALIDATION_FAILED",
-        "ACKNOWLEDGEMENT_VALIDATION_FAILED"
+        400,
+        "ACKNOWLEDGEMENT_VALIDATION_FAILED",
+        "The acknowledgement request failed validation"
+      ),
+      (
+        "INVALID_CREDENTIALS",
+        401,
+        "INVALID_CREDENTIALS",
+        "Invalid authentication information provided"
+      ),
+      (
+        "NOT_FOUND",
+        404,
+        "MATCHING_RESOURCE_NOT_FOUND",
+        "A resource with the name in the request can not be found in the API"
+      ),
+      (
+        "INVALID_REPORTID",
+        400,
+        "REPORT_ID_INVALID",
+        "The provided report ID is invalid"
+      ),
+      (
+        "INVALID_DATETIME",
+        400,
+        "PRESENTED_DATE_TIME_INVALID",
+        "The presentedDateTime query parameter is missing or invalid"
+      ),
+      (
+        "NOT_AUTHORISED",
+        403,
+        "CLIENT_OR_AGENT_NOT_AUTHORISED",
+        "The client and/or agent is not authorised"
       )
+    ).foreach { case (scenario, status, code, message) =>
+      Scenario(s"Acknowledge $scenario returns $status and satisfies the OAS") {
+        assertStubbedAcknowledgementError(
+          scenario,
+          status,
+          code,
+          message
+        )
+      }
     }
   }
 
   private def assertStubbedAcknowledgementError(
     scenario: String,
-    code: String
+    status: Int,
+    code: String,
+    message: String
   ): Unit = {
     val response = api.acknowledge(
-      headers = headers(scenario)
+      headers = headers(Some(scenario))
     )
 
-    assertError(response, 400, code)
-    verifyStubbedPath("/acknowledge", scenario)
+    assertError(response, status, code)
+    (response.json \ "message").as[String] shouldBe message
+    verifyStubbedPath("/acknowledge", Some(scenario))
 
     validateContract(
       s"/acknowledge/${TestData.vrn}/${TestData.reportId}/${TestData.rdsCorrelationId}",
       response,
-      scenario,
+      Some(scenario),
       query = Map("presentedDateTime" -> TestData.presentedDateTime)
     )
   }
 
-  private def verifyStubbedPath(path: String, scenario: String): Unit = {
-    downstream.server.verify(
-      1,
-      postRequestedFor(urlPathEqualTo(path))
-        .withHeader("Gov-Test-Scenario", equalTo(scenario))
-    )
+  private def verifyStubbedPath(path: String, scenario: Option[String]): Unit = {
+    val request  = postRequestedFor(urlPathEqualTo(path))
+    val expected = scenario match {
+      case None       => request.withHeader("Gov-Test-Scenario", absent())
+      case Some(name) => request.withHeader("GOV-Test-Scenario", equalTo(name))
+    }
+    downstream.server.verify(1, expected)
 
     assertNotCalled(s"/internal/validate/${TestData.vrn}")
     assertNotCalled("/check/insights")
@@ -185,7 +227,7 @@ class StubbedContractSpec extends BaseSpec {
   private def validateContract(
     localPath: String,
     response: ApiResponse,
-    scenario: String,
+    scenario: Option[String],
     body: Option[String] = None,
     query: Map[String, String] = Map.empty
   ): Unit = {
@@ -221,7 +263,7 @@ class StubbedContractSpec extends BaseSpec {
     )
 
     withClue(
-      s"OAS validatiomn errors:\n${report.getMessages.asScala.mkString("\n")}\n"
+      s"OAS validation errors:\n${report.getMessages.asScala.mkString("\n")}\n"
     ) {
       report.hasErrors shouldBe false
     }

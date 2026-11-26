@@ -40,7 +40,9 @@ final case class ApiResponse(
 
 final class ApiClient(serviceName: String = "mtd-transaction-risking") {
   private val config  = ConfigFactory.load()
-  private val timeout = Duration.ofSeconds(config.getLong("local.request-timeout-seconds"))
+  private val timeout = Duration.ofSeconds(
+    config.getLong(s"${TestEnvironment.environment}.request-timeout-seconds")
+  )
 
   private val client = HttpClient
     .newBuilder()
